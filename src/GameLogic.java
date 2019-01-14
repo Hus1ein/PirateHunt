@@ -15,16 +15,17 @@ public class GameLogic {
     private List<MatrixField> barriers;
     private MatrixField target;
     private ArrayList<ArrayList<MatrixField>> matrix;
+    private boolean gameOver;
     public static final int EASY = 1;
     public static final int AVERAGE = 2;
     public static final int HARD = 3;
 
     public void init(String playerName, int level) {
+        this.gameOver = false;
         this.level = level;
         this.matrix = createMatrix();
         this.target = createTarget();
         matrix.get(target.getRow()).get(target.getColumn()).setStatus(MatrixField.TARGET);
-        //System.out.println(this.target.getRow() + "--" + this.target.getColumn());
 
         this.currentPlayer = createPlayer(playerName);
         matrix.get(currentPlayer.getPosition().getRow()).get(currentPlayer.getPosition().getColumn()).setStatus(MatrixField.PLAYER);
@@ -34,8 +35,8 @@ public class GameLogic {
         //TODO create barriers.
         //fillingMatrix();
 
-        printMatrix();
-        startGame();
+        //printMatrix();
+        //startGame();
     }
 
     public void changeMatrixFieldsStatus(MatrixField oldField, MatrixField newField) {
@@ -92,11 +93,11 @@ public class GameLogic {
     private List<Enemy> createEnemies() {
         int enemiesNumber = 0;
         if (this.level == 1) {
-            enemiesNumber = 8;
+            enemiesNumber = 4;
         } else if (this.level == 2) {
-            enemiesNumber = 12;
+            enemiesNumber = 8;
         } else if (this.level == 3) {
-            enemiesNumber = 16;
+            enemiesNumber = 12;
         }
         List<Enemy> enemiesResult = new ArrayList<>();
         for (int i = 0; i < enemiesNumber / 4; i++) {
@@ -222,31 +223,28 @@ public class GameLogic {
         }
     }
 
-    public void startGame() {
-        Scanner input = new Scanner(System.in);
-        String direction;
-        for (int i = 0; i < 10; i++) {
-            direction = input.nextLine();
-            MatrixField oldField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.EMPTY);
-            switch (direction) {
-                case "up":
-                    currentPlayer.move(Player.UP);
-                    break;
-                case "down":
-                    currentPlayer.move(Player.DOWN);
-                    break;
-                case "left":
-                    currentPlayer.move(Player.LEFT);
-                    break;
-                case "right":
-                    currentPlayer.move(Player.RIGHT);
-                    break;
-            }
-            MatrixField newField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.PLAYER);
-            changeMatrixFieldsStatus(oldField, newField);
-            moveEnemies();
-            printMatrix();
+    public void startGame(String direction) {
+        //Scanner input = new Scanner(System.in);
+        MatrixField oldField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.EMPTY);
+        switch (direction) {
+            case "up":
+                currentPlayer.move(Player.UP);
+                break;
+            case "down":
+                currentPlayer.move(Player.DOWN);
+                break;
+            case "left":
+                currentPlayer.move(Player.LEFT);
+                break;
+            case "right":
+                currentPlayer.move(Player.RIGHT);
+                break;
         }
+        MatrixField newField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.PLAYER);
+        changeMatrixFieldsStatus(oldField, newField);
+        moveEnemies();
+            //printMatrix();
+
     }
 
     public void moveEnemies() {
@@ -289,6 +287,23 @@ public class GameLogic {
         changeMatrixFieldsStatus(oldField, newField);
     }
 
+    public boolean changeEnemyPosition(MatrixField field) {
+        if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.EMPTY) {
+            this.matrix.get(field.getRow()).get(field.getColumn()).setStatus(MatrixField.ENEMY);
+            //return true;
+
+        } else if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.ENEMY) {
+            this.matrix.get(field.getRow()).get(field.getColumn()).setStatus(MatrixField.BARRIER);
+            //Delete the two enemies.
+        } else if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.PLAYER) {
+            this.gameOver = true;
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
     public void printMatrix() {
         for (int i = 0; i < 15; i++) {
             for (int j = 0; j < 15; j++) {
@@ -303,6 +318,14 @@ public class GameLogic {
             System.out.println();
         }
         System.out.println("--------------------------------------------------------------------------------------------");
+    }
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public List<Enemy> getEnemies() {
+        return enemies;
     }
 
 }
