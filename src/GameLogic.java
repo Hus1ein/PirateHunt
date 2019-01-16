@@ -12,7 +12,7 @@ public class GameLogic {
     private int level;
     private Player currentPlayer;
     private List<Enemy> enemies;
-    private List<MatrixField> barriers;
+    private ArrayList<MatrixField> barriers;
     private MatrixField target;
     private ArrayList<ArrayList<MatrixField>> matrix;
     private boolean gameOver;
@@ -23,6 +23,7 @@ public class GameLogic {
     public void init(String playerName, int level) {
         this.gameOver = false;
         this.level = level;
+        this.barriers = new ArrayList<>();
         this.matrix = createMatrix();
         this.target = createTarget();
         matrix.get(target.getRow()).get(target.getColumn()).setStatus(MatrixField.TARGET);
@@ -61,11 +62,11 @@ public class GameLogic {
 
     private Player createPlayer(String playerName) {
         Player player;
-        if (this.target.getRow() == 0 && this.target.getRow() == 0) {
+        if (this.target.getRow() == 0 && this.target.getColumn() == 0) {
             player = new Player(playerName, new MatrixField(14, 14));
-        } else if (this.target.getRow() == 0 && this.target.getRow() == 14) {
+        } else if (this.target.getRow() == 0 && this.target.getColumn() == 14) {
             player = new Player(playerName, new MatrixField(14, 0));
-        } else if (this.target.getRow() == 14 && this.target.getRow() == 0) {
+        } else if (this.target.getRow() == 14 && this.target.getColumn() == 0) {
             player = new Player(playerName, new MatrixField(0, 14));
         } else {
             player = new Player(playerName, new MatrixField(0, 0));
@@ -255,36 +256,65 @@ public class GameLogic {
 
     public void AI(Enemy enemy) {
         MatrixField oldField = new MatrixField(enemy.getPosition().getRow(), enemy.getPosition().getColumn(), MatrixField.EMPTY);
+        int newRow = enemy.getPosition().getRow();
+        int newColumn = enemy.getPosition().getColumn();
         if (enemy.getPosition().getColumn() == currentPlayer.getPosition().getColumn()) {
             if (enemy.getPosition().getRow() > currentPlayer.getPosition().getRow()) {
-                enemy.getPosition().setRow(enemy.getPosition().getRow() - 1);
+                newRow = enemy.getPosition().getRow() - 1;
             } else {
-                enemy.getPosition().setRow(enemy.getPosition().getRow() + 1);
+                newRow = enemy.getPosition().getRow() + 1;
             }
 
         } else if (enemy.getPosition().getRow() == currentPlayer.getPosition().getRow()) {
             if (enemy.getPosition().getColumn() > currentPlayer.getPosition().getColumn()) {
-                enemy.getPosition().setColumn(enemy.getPosition().getColumn() - 1);
+                newColumn = enemy.getPosition().getColumn() - 1;
             } else {
-                enemy.getPosition().setColumn(enemy.getPosition().getColumn() + 1);
+                newColumn = enemy.getPosition().getColumn() + 1;
             }
         } else {
             if (enemy.getPosition().getColumn() > currentPlayer.getPosition().getColumn() &&
                     enemy.getPosition().getRow() > currentPlayer.getPosition().getRow()) {
-                enemy.getPosition().setRow(enemy.getPosition().getRow() - 1);
+                newRow = enemy.getPosition().getRow() - 1;
             } else if (enemy.getPosition().getColumn() > currentPlayer.getPosition().getColumn() &&
                     enemy.getPosition().getRow() < currentPlayer.getPosition().getRow()) {
-                enemy.getPosition().setColumn(enemy.getPosition().getColumn() - 1);
+                newColumn = enemy.getPosition().getColumn() - 1;
             } else if (enemy.getPosition().getColumn() < currentPlayer.getPosition().getColumn() &&
                     enemy.getPosition().getRow() > currentPlayer.getPosition().getRow()) {
-                enemy.getPosition().setColumn(enemy.getPosition().getColumn() + 1);
+                newColumn = enemy.getPosition().getColumn() + 1;
             } else if (enemy.getPosition().getColumn() < currentPlayer.getPosition().getColumn() &&
                     enemy.getPosition().getRow() < currentPlayer.getPosition().getRow()) {
-                enemy.getPosition().setRow(enemy.getPosition().getRow() + 1);
+                newRow = enemy.getPosition().getRow() + 1;
             }
         }
-        MatrixField newField = new MatrixField(enemy.getPosition().getRow(), enemy.getPosition().getColumn(), MatrixField.ENEMY);
+
+        MatrixField newField = new MatrixField(newRow, newColumn, MatrixField.ENEMY);
+        if (!noBarriersOnTheWay(newRow, newColumn)) {
+            int oldRow = enemy.getPosition().getRow();
+            int oldColumn = enemy.getPosition().getColumn();
+            if (oldColumn + 1 <= 14 && noBarriersOnTheWay(oldRow, oldColumn + 1)) {
+                newColumn = oldColumn + 1;
+            } else if (oldColumn - 1 >= 0 && noBarriersOnTheWay(oldRow, oldColumn - 1)) {
+                newColumn = oldColumn - 1;
+            } else if (oldRow + 1 <= 14 && noBarriersOnTheWay(oldRow + 1, oldColumn)) {
+                newRow = oldRow + 1;
+            } else if (oldRow - 1 >= 0 && noBarriersOnTheWay(oldRow - 1, oldColumn)) {
+                newRow = oldRow - 1;
+            }
+            newField = new MatrixField(newRow, newColumn, MatrixField.ENEMY);
+        }
+
+        for (int i = 0; i < enemies.size(); i++) {
+            if (newRow == enemies.get(i).getPosition().getRow() && newColumn == enemies.get(i).getPosition().getColumn()) {
+                createBarrier(enemy, enemies.get(i), newRow, newColumn);
+                return;
+            }
+        }
+
+        enemy.getPosition().setRow(newRow);
+        enemy.getPosition().setColumn(newColumn);
+
         changeMatrixFieldsStatus(oldField, newField);
+
     }
 
     public boolean changeEnemyPosition(MatrixField field) {
@@ -326,6 +356,48 @@ public class GameLogic {
 
     public List<Enemy> getEnemies() {
         return enemies;
+    }
+
+    public MatrixField getTarget() {
+        return target;
+    }
+
+    public ArrayList<MatrixField> getBarriers() {
+        return barriers;
+    }
+
+    public boolean isPlayerLose() {
+        for (int i = 0; i < enemies.size(); i++) {
+            if (enemies.get(i).getPosition().getRow() == currentPlayer.getPosition().getRow() && enemies.get(i).getPosition().getColumn() == currentPlayer.getPosition().getColumn()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public boolean isPlayerWin() {
+        if (currentPlayer.getPosition().getRow() == target.getRow() && currentPlayer.getPosition().getColumn() == target.getColumn()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void createBarrier(Enemy firstEnemy, Enemy secondEnemy, int row, int column) {
+        enemies.remove(firstEnemy);
+        enemies.remove(secondEnemy);
+        barriers.add(new MatrixField(firstEnemy.getPosition().getRow(), firstEnemy.getPosition().getColumn()));
+        matrix.get(row).get(column).setStatus(MatrixField.BARRIER);
+    }
+
+    public boolean noBarriersOnTheWay(int row, int column) {
+        for (int i = 0; i < barriers.size(); i++) {
+            if (barriers.get(i).getRow() == row && barriers.get(i).getColumn() == column) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }
