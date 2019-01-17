@@ -33,11 +33,8 @@ public class GameLogic {
 
         this.enemies = new ArrayList<>();
         createEnemies();
-        //TODO create barriers.
-        //fillingMatrix();
 
         //printMatrix();
-        //play();
     }
 
     public void changeMatrixFieldsStatus(MatrixField oldField, MatrixField newField) {
@@ -243,7 +240,7 @@ public class GameLogic {
         }
         MatrixField newField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.PLAYER);
         changeMatrixFieldsStatus(oldField, newField);
-        moveEnemies();
+
             //printMatrix();
 
     }
@@ -303,6 +300,7 @@ public class GameLogic {
             newField = new MatrixField(newRow, newColumn, MatrixField.ENEMY);
         }
 
+        //Create barrier
         for (int i = 0; i < enemies.size(); i++) {
             if (newRow == enemies.get(i).getPosition().getRow() && newColumn == enemies.get(i).getPosition().getColumn()) {
                 createBarrier(enemy, enemies.get(i), newRow, newColumn);
@@ -315,23 +313,6 @@ public class GameLogic {
 
         changeMatrixFieldsStatus(oldField, newField);
 
-    }
-
-    public boolean changeEnemyPosition(MatrixField field) {
-        if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.EMPTY) {
-            this.matrix.get(field.getRow()).get(field.getColumn()).setStatus(MatrixField.ENEMY);
-            //return true;
-
-        } else if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.ENEMY) {
-            this.matrix.get(field.getRow()).get(field.getColumn()).setStatus(MatrixField.BARRIER);
-            //Delete the two enemies.
-        } else if (this.matrix.get(field.getRow()).get(field.getColumn()).getStatus() == MatrixField.PLAYER) {
-            this.gameOver = true;
-        } else {
-            return false;
-        }
-
-        return true;
     }
 
     public void printMatrix() {
@@ -386,7 +367,7 @@ public class GameLogic {
     private void createBarrier(Enemy firstEnemy, Enemy secondEnemy, int row, int column) {
         enemies.remove(firstEnemy);
         enemies.remove(secondEnemy);
-        barriers.add(new MatrixField(firstEnemy.getPosition().getRow(), firstEnemy.getPosition().getColumn()));
+        barriers.add(new MatrixField(row, column));
         matrix.get(row).get(column).setStatus(MatrixField.BARRIER);
     }
 

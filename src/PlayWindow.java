@@ -78,10 +78,14 @@ public class PlayWindow implements KeyListener {
 
 
         for (int i = 0; i < enemies.size();  i++) {
+            Image enemyIcon = new ImageIcon(Main.class.getResource("/images/enemy.png")).getImage();
+            buttons[enemies.get(i).getPosition().getRow()][enemies.get(i).getPosition().getColumn()].setIcon(new ImageIcon(enemyIcon));
             buttons[enemies.get(i).getPosition().getRow()][enemies.get(i).getPosition().getColumn()].setBackground(Color.RED);
         }
 
         for (int i = 0; i < barriers.size();  i++) {
+            Image islandIcon = new ImageIcon(Main.class.getResource("/images/island.png")).getImage();
+            buttons[barriers.get(i).getRow()][barriers.get(i).getColumn()].setIcon(new ImageIcon(islandIcon));
             buttons[barriers.get(i).getRow()][barriers.get(i).getColumn()].setBackground(new Color(153, 102, 51));
         }
     }
@@ -102,7 +106,7 @@ public class PlayWindow implements KeyListener {
         mainFrame.setVisible(visibility);
     }
 
-    private void gameOver() {
+    private void gameOverAndUserWin() {
         clearElementsOfGame();
 
         player = gameLogic.getCurrentPlayer();
@@ -110,14 +114,68 @@ public class PlayWindow implements KeyListener {
         buttons[player.getPosition().getRow()][player.getPosition().getColumn()].setIcon(new ImageIcon(imageIcon));
         buttons[player.getPosition().getRow()][player.getPosition().getColumn()].setBackground(Color.GREEN);
         mainFrame.removeKeyListener(this);
+
+        String messegeText = "";
+        if (level < 3) {
+            messegeText = "Go to the next level ->";
+        } else {
+            messegeText = "Game Over, " + playerName + ", You are winning";
+        }
+
+        final JComponent[] inputs = new JComponent[] {
+                new JLabel(messegeText),
+        };
+
+        int result = JOptionPane.showConfirmDialog(null, inputs, "Pirate Hunt", JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            if (level < 3) {
+                mainFrame.dispose();
+                PlayWindow playWindow = new PlayWindow(playerName, level + 1);
+                playWindow.startWindow();
+                playWindow.setWindowVisibility(true);
+            } else {
+                System.exit(0);
+            }
+        } else {
+            System.exit(0);
+        }
+    }
+
+    private void gameOverAndUserLose() {
+        clearElementsOfGame();
+
+        player = gameLogic.getCurrentPlayer();
+        Image imageIcon = new ImageIcon(Main.class.getResource("/images/yatch2.png")).getImage();
+        buttons[player.getPosition().getRow()][player.getPosition().getColumn()].setIcon(new ImageIcon(imageIcon));
+        buttons[player.getPosition().getRow()][player.getPosition().getColumn()].setBackground(Color.RED);
+        mainFrame.removeKeyListener(this);
+
+        String messegeText = playerName + ", You are lose. Play again?";
+
+        final JComponent[] inputs = new JComponent[] {
+                new JLabel(messegeText),
+        };
+
+        int result = JOptionPane.showConfirmDialog(null, inputs, "Pirate Hunt", JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            mainFrame.dispose();
+            PlayWindow playWindow = new PlayWindow(playerName, level);
+            playWindow.startWindow();
+            playWindow.setWindowVisibility(true);
+        } else {
+            System.exit(0);
+        }
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println("To sam");
         if (e.getKeyCode() == 37) {
             if (player.getPosition().getColumn() >= 1 && gameLogic.noBarriersOnTheWay(player.getPosition().getRow(), player.getPosition().getColumn() - 1)) {
                 gameLogic.play("left");
+            } else {
+                return;
             }
 
         }
@@ -125,12 +183,16 @@ public class PlayWindow implements KeyListener {
         if (e.getKeyCode() == 38) {
             if (player.getPosition().getRow() >= 1 && gameLogic.noBarriersOnTheWay(player.getPosition().getRow() - 1, player.getPosition().getColumn())) {
                 gameLogic.play("up");
+            } else {
+                return;
             }
         }
 
         if (e.getKeyCode() == 39) {
             if (player.getPosition().getColumn() <= 13 && gameLogic.noBarriersOnTheWay(player.getPosition().getRow(), player.getPosition().getColumn() + 1)) {
                 gameLogic.play("right");
+            } else {
+                return;
             }
 
         }
@@ -138,22 +200,36 @@ public class PlayWindow implements KeyListener {
         if (e.getKeyCode() == 40) {
             if (player.getPosition().getRow() <= 13 && gameLogic.noBarriersOnTheWay(player.getPosition().getRow() + 1, player.getPosition().getColumn())) {
                 gameLogic.play("down");
+            } else {
+                return;
             }
         }
 
+
         if (gameLogic.isPlayerWin()) {
             System.out.println("Win");
-            gameOver();
+            gameOverAndUserWin();
         } else if (gameLogic.isPlayerLose()) {
             System.out.println("Lose");
-            gameOver();
+            gameOverAndUserLose();
         }else if (!gameLogic.isPlayerWin() && !gameLogic.isPlayerLose() && (e.getKeyCode() == 37 || e.getKeyCode() == 38 || e.getKeyCode() == 39 || e.getKeyCode() == 40)) {
-            player = gameLogic.getCurrentPlayer();
-            enemies = gameLogic.getEnemies();
-            barriers = gameLogic.getBarriers();
 
-            clearElementsOfGame();
-            setElementsOfGame();
+            gameLogic.moveEnemies();
+
+            if (gameLogic.isPlayerWin()) {
+                System.out.println("Win");
+                gameOverAndUserWin();
+            } else if (gameLogic.isPlayerLose()) {
+                System.out.println("Lose");
+                gameOverAndUserLose();
+            } else {
+                player = gameLogic.getCurrentPlayer();
+                enemies = gameLogic.getEnemies();
+                barriers = gameLogic.getBarriers();
+
+                clearElementsOfGame();
+                setElementsOfGame();
+            }
         }
     }
 
