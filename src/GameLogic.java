@@ -11,7 +11,7 @@ public class GameLogic {
 
     private int level;
     private Player currentPlayer;
-    private List<Enemy> enemies;
+    private ArrayList<Enemy> enemies;
     private ArrayList<MatrixField> barriers;
     private MatrixField target;
     private ArrayList<ArrayList<MatrixField>> matrix;
@@ -37,7 +37,7 @@ public class GameLogic {
         //fillingMatrix();
 
         //printMatrix();
-        //startGame();
+        //play();
     }
 
     public void changeMatrixFieldsStatus(MatrixField oldField, MatrixField newField) {
@@ -224,7 +224,7 @@ public class GameLogic {
         }
     }
 
-    public void startGame(String direction) {
+    public void play(String direction) {
         //Scanner input = new Scanner(System.in);
         MatrixField oldField = new MatrixField(currentPlayer.getPosition().getRow(), currentPlayer.getPosition().getColumn(), MatrixField.EMPTY);
         switch (direction) {
@@ -354,7 +354,7 @@ public class GameLogic {
         return currentPlayer;
     }
 
-    public List<Enemy> getEnemies() {
+    public ArrayList<Enemy> getEnemies() {
         return enemies;
     }
 
